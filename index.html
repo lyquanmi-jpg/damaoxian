@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>真心话大冒险 · 惩罚抽奖</title>
+  <style>
+    :root {
+      --purple: #8b5cff;
+      --pink: #ff7da6;
+      --blue: #7cc6fe;
+      --red: #ff5757;
+      --card-bg: #ffffff;
+      --bg: linear-gradient(135deg, #ffe9f0, #f3edff);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC",
+        "Microsoft YaHei", Arial, sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      padding: 20px 14px 40px;
+    }
+
+    h1 {
+      margin: 10px 0 4px;
+      font-size: 24px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 18px;
+      padding: 16px 14px 18px;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    .difficulty-title {
+      font-size: 13px;
+      margin-bottom: 8px;
+      color: #555;
+    }
+
+    .difficulty-buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 40%;
+      padding: 10px 4px;
+      border-radius: 999px;
+      border: none;
+      font-size: 14px;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: transform 0.12s, box-shadow 0.12s, opacity 0.12s;
+      opacity: 0.9;
+    }
+
+    .btn span.emoji {
+      font-size: 16px;
+    }
+
+    .btn.easy {
+      background: linear-gradient(135deg, #7cc6fe, #64a9ff);
+    }
+
+    .btn.stim {
+      background: linear-gradient(135deg, #ff8fb3, #ff6f9c);
+    }
+
+    .btn.sss {
+      background: linear-gradient(135deg, #c47dff, #9a5bff);
+    }
+
+    .btn.omega {
+      background: linear-gradient(135deg, #ff5757, #ff8760);
+    }
+
+    .btn.active {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-1px);
+      opacity: 1;
+    }
+
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    /* 抽奖卡片 */
+    #drawBoxWrapper {
+      margin-top: 18px;
+      perspective: 900px; /* 3D 视角 */
+    }
+
+    #drawBox {
+      margin: 0 auto;
+      width: 100%;
+      max-width: 420px;
+      height: 190px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+      font-size: 18px;
+      line-height: 1.5;
+      position: relative;
+      transform-style: preserve-3d;
+      overflow: hidden;
+    }
+
+    #drawText {
+      position: absolute;
+      padding: 0 6px;
+    }
+
+    .draw-label {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 11px;
+      color: #aaa;
+    }
+
+    .flip-out {
+      animation: flipOut 0.25s forwards;
+    }
+
+    .flip-in {
+      animation: flipIn 0.25s forwards;
+    }
+
+    @keyframes flipOut {
+      from {
+        transform: rotateY(0deg);
+      }
+      to {
+        transform: rotateY(90deg);
+      }
+    }
+
+    @keyframes flipIn {
+      from {
+        transform: rotateY(-90deg);
+      }
+      to {
+        transform: rotateY(0deg);
+      }
+    }
+
+    .draw-btn {
+      margin: 18px auto 0;
+      padding: 12px 28px;
+      background: linear-gradient(135deg, #6b5bff, #b27bff);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      font-size: 16px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 6px 14px rgba(107, 91, 255, 0.35);
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .draw-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 3px 7px rgba(107, 91, 255, 0.28);
+    }
+
+    .draw-btn span.emoji {
+      font-size: 18px;
+    }
+
+    /* 自定义惩罚池面板 */
+    .custom-toggle {
+      margin-top: 16px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid #d2c7ff;
+      background: #f3f0ff;
+      font-size: 13px;
+      color: #5a4ad1;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .custom-panel {
+      margin: 12px auto 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+      display: none;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .custom-panel p {
+      margin: 0 0 6px;
+      color: #666;
+      font-size: 12px;
+    }
+
+    .custom-panel h3 {
+      margin: 8px 0 4px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #f0f0ff;
+      color: #7a6bff;
+    }
+
+    .custom-panel textarea {
+      width: 100%;
+      min-height: 60px;
+      resize: vertical;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      padding: 6px 8px;
+      box-sizing: border-box;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .custom-save {
+      margin-top: 6px;
+      padding: 8px 18px;
+      border-radius: 20px;
+      border: none;
+      background: linear-gradient(135deg, #6b5bff, #b27bff);
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      display: block;
+      margin-left: auto;
+    }
+
+    .footer {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 11px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>真心话大冒险 · 惩罚盲盒</h1>
+    <div class="subtitle">输了就点卡片，抽一条让你怀疑人生的小惩罚 🎲</div>
+
+    <div class="card">
+      <div class="difficulty-title">选择惩罚难度：</div>
+      <div class="difficulty-buttons">
+        <button class="btn easy" data-mode="L">
+          <span class="emoji">🌈</span><span>轻度</span>
+        </button>
+        <button class="btn stim" data-mode="H">
+          <span class="emoji">💘</span><span>刺激</span>
+        </button>
+        <button class="btn sss" data-mode="SSS">
+          <span class="emoji">💀</span><span>超级社死</span>
+        </button>
+        <button class="btn omega" data-mode="OMG">
+          <span class="emoji">☠️</span><span>终末毁灭</span>
+        </button>
+      </div>
+      <div class="hint">点上面选一档，再点下面卡片开始抽惩罚。</div>
+
+      <div id="drawBoxWrapper">
+        <div id="drawBox">
+          <div class="draw-label">惩罚卡</div>
+          <div id="drawText">选择难度开始抽取</div>
+        </div>
+      </div>
+
+      <button class="draw-btn" id="drawBtn">
+        <span class="emoji">🎴</span><span>抽 1 次</span>
+      </button>
+
+      <button class="custom-toggle" id="customToggle">
+        <span>🛠 自定义惩罚池</span><span id="customArrow">▶</span>
+      </button>
+
+      <div id="customPanel" class="custom-panel">
+        <p>每行一条惩罚，修改后点击「保存惩罚池」。只在当前设备&当前打开生效。</p>
+        <h3><span class="tag">L</span> 轻度</h3>
+        <textarea id="customL"></textarea>
+        <h3><span class="tag">H</span> 情侣向刺激</h3>
+        <textarea id="customH"></textarea>
+        <h3><span class="tag">SSS</span> 超级社死</h3>
+        <textarea id="customSSS"></textarea>
+        <h3><span class="tag">Ω∞+</span> 终末毁灭</h3>
+        <textarea id="customOMG"></textarea>
+        <button class="custom-save" id="saveBtn">保存惩罚池</button>
+      </div>
+    </div>
+
+    <div class="footer">友情提示：终末毁灭难度，慎点。真的会后悔。🫠</div>
+  </div>
+
+  <script>
+    // 默认惩罚池
+    let pool = {
+      L: [
+        "模仿猫咪伸懒腰 + 喵一声",
+        "做一个输麻了的痛苦表情让别人拍照",
+        "用可爱语气说：我其实很厉害！",
+        "模仿朋友的走路 5 秒",
+        "假装直播带货空气 10 秒",
+        "自拍摆 3 个姿势让大家点评",
+        "做一个胜利舞 5 秒",
+        "朋友帮你拍 今日头像",
+        "当 10 秒 NPC，只能说“好的”",
+        "大声说：今天的我，需要表扬！"
+      ],
+      H: [
+        "深情看某人 3 秒并说：如果我喜欢你，你会察觉吗？",
+        "靠近某人 10 公分说：再靠近我会心动",
+        "对异性说一句你最温柔的情话",
+        "模仿你被喜欢的人夸赞后的害羞反应",
+        "选一个人，说：如果我们在恋综，我选你",
+        "向某人轻声说：你今天……很好看",
+        "对某人说：你觉得我适合谈恋爱吗？",
+        "和某人做一次轻触手指互动 3 秒",
+        "问某人：如果我追你，你会拒绝吗？",
+        "模仿恋综里心动瞬间笑容 5 秒",
+        "对某人说：你是今天的例外",
+        "描述你最近一次被吸引的瞬间",
+        "请某人轻调整你的衣领或头发",
+        "对某人说：我其实挺想了解你更多",
+        "轻声对某人说：你值得被喜欢，包括被我喜欢"
+      ],
+      SSS: [
+        "重演你人生最菜的一次暗恋情节",
+        "用爸妈骂你的语气说一句话",
+        "静默 5 秒后说：我其实蛮有魅力",
+        "抱空气：你终于来了…",
+        "模仿你喝醉后的样子",
+        "模仿朋友的穿搭+表情 5 秒",
+        "让大家评分你的吸引力（不可反驳）",
+        "朗读：我为什么配不上别人（朋友写稿）",
+        "对某人说：我最怕你讨厌我，因为…",
+        "全场说你让人心疼的地方，你不能反驳",
+        "深情凝视某人 30 秒",
+        "复刻恋综淘汰告别独白",
+        "对某人说：你影响过我",
+        "演心碎后强撑的戏 20 秒",
+        "站起来说：我社死完成了"
+      ],
+      OMG: [
+        "朋友圈发：我不再等你了（1 分钟删除）",
+        "给不熟的人发：我有点想你（立即撤回）",
+        "录 15 秒崩溃情绪视频给全场看",
+        "朗读 100 字：我为什么配不上任何人",
+        "给你最难面对的人发：我在意你（撤回）",
+        "全场说他们误会过你的事，你必须听",
+        "当众说一个你最不敢承认的真相",
+        "30 秒演被喜欢的人拒绝但强撑",
+        "朗读：我是小丑声明",
+        "朋友圈发：我不隐藏情绪了（删）",
+        "重演你最尴尬的告白场景",
+        "对某人说：我最怕你，因为我在意你",
+        "当众说：我可能不配",
+        "30 秒演所有人离开你的场景",
+        "让全场轮流说你让人心疼的地方",
+        "说：我一直在伪装自己，其实我很__",
+        "当面对某人说：我依赖你",
+        "录“我会变得更好”视频给全场看",
+        "群发 5 人：谢谢你们，我努力了",
+        "跪 3 秒：今天是我最勇敢的一天"
+      ]
+    };
+
+    let currentMode = null;
+
+    const drawBox = document.getElementById("drawBox");
+    const drawText = document.getElementById("drawText");
+    const drawBtn = document.getElementById("drawBtn");
+    const diffButtons = document.querySelectorAll(".difficulty-buttons .btn");
+    const customToggle = document.getElementById("customToggle");
+    const customPanel = document.getElementById("customPanel");
+    const customArrow = document.getElementById("customArrow");
+    const saveBtn = document.getElementById("saveBtn");
+
+    function setMode(mode) {
+      currentMode = mode;
+      diffButtons.forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.mode === mode);
+      });
+      drawText.textContent = "已选择难度，点击下方抽一条惩罚卡";
+    }
+
+    diffButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        setMode(btn.dataset.mode);
+      });
+    });
+
+    function drawPunish() {
+      if (!currentMode) {
+        drawText.textContent = "请先选择一个难度再抽卡～";
+        return;
+      }
+      const list = pool[currentMode];
+      if (!list || list.length === 0) {
+        drawText.textContent = "当前难度惩罚池为空，请先在下方自定义。";
+        return;
+      }
+
+      drawBox.classList.remove("flip-in", "flip-out");
+      drawBox.classList.add("flip-out");
+
+      setTimeout(() => {
+        const result = list[Math.floor(Math.random() * list.length)];
+        drawText.textContent = result;
+        drawBox.classList.remove("flip-out");
+        drawBox.classList.add("flip-in");
+      }, 250);
+    }
+
+    drawBtn.addEventListener("click", drawPunish);
+
+    // 自定义惩罚池
+    function initCustomPool() {
+      const map = {
+        customL: "L",
+        customH: "H",
+        customSSS: "SSS",
+        customOMG: "OMG"
+      };
+      Object.keys(map).forEach(id => {
+        const textarea = document.getElementById(id);
+        if (textarea && pool[map[id]]) {
+          textarea.value = pool[map[id]].join("\n");
+        }
+      });
+    }
+
+    function updatePool() {
+      const map = {
+        customL: "L",
+        customH: "H",
+        customSSS: "SSS",
+        customOMG: "OMG"
+      };
+      Object.keys(map).forEach(id => {
+        const textarea = document.getElementById(id);
+        if (!textarea) return;
+        const lines = textarea.value
+          .split(/\n+/)
+          .map(t => t.trim())
+          .filter(t => t.length > 0);
+        if (lines.length > 0) {
+          pool[map[id]] = lines;
+        }
+      });
+      alert("惩罚池已更新！（本次打开窗口内生效）");
+    }
+
+    customToggle.addEventListener("click", () => {
+      const visible = customPanel.style.display === "block";
+      customPanel.style.display = visible ? "none" : "block";
+      customArrow.textContent = visible ? "▶" : "▼";
+    });
+
+    saveBtn.addEventListener("click", updatePool);
+
+    // 初始化
+    initCustomPool();
+  </script>
+</body>
+</html>
